@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>sora コンテンツチェッカー</title>
+<style>
+:root {
+  --navy: #1B2A4A;
+  --blue: #4A7FB5;
+  --gold: #C4983B;
+  --pink: #E8A0BF;
+  --mint: #2ECC71;
+  --red: #E74C3C;
+  --light: #F8F9FA;
+  --white: #FFFFFF;
+  --gray: #6C757D;
+  --light-gray: #E9ECEF;
+  --radius: 12px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+  background: var(--light);
+  color: #333;
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+/* Header */
+.header {
+  background: var(--navy);
+  color: var(--white);
+  padding: 16px 16px 12px;
+  position: sticky; top:0; z-index:100;
+}
+.header h1 { font-size:18px; font-weight:700; }
+.header .sub { font-size:12px; color: rgba(255,255,255,0.7); margin-top:2px; }
+
+/* Stats bar */
+.stats {
+  display:flex; gap:8px; padding:12px 16px;
+  overflow-x:auto; white-space:nowrap;
+  background: var(--white); border-bottom:1px solid var(--light-gray);
+}
+.stat-chip {
+  display:inline-flex; align-items:center; gap:4px;
+  padding:6px 12px; border-radius:20px;
+  font-size:12px; font-weight:600;
+  cursor:pointer; border:2px solid transparent;
+  transition: all 0.2s;
+  flex-shrink:0;
+}
+.stat-chip.active { border-color: var(--navy); }
+.stat-chip .num { font-size:14px; font-weight:700; }
+.chip-all { background:#E9ECEF; color:#333; }
+.chip-draft { background:#FFF3CD; color:#856404; }
+.chip-checking { background:#CCE5FF; color:#004085; }
+.chip-revision { background:#F8D7DA; color:#721C24; }
+.chip-approved { background:#D4EDDA; color:#155724; }
+/* Sheet tabs */
+.sheet-tabs {
+  display:flex; gap:6px; padding:10px 16px;
+  overflow-x:auto; -webkit-overflow-scrolling: touch;
+  background: var(--white);
+}
+.sheet-tab {
+  flex-shrink:0; padding:8px 14px;
+  border-radius:20px; font-size:12px; font-weight:600;
+  background: var(--light-gray); color: var(--gray);
+  cursor:pointer; border:none; transition: all 0.2s;
+}
+.sheet-tab.active {
+  background: var(--navy); color: var(--white);
+}
+
+/* Content cards */
+.cards { padding:12px 16px; }
+.card {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  margin-bottom:12px;
+  overflow:hidden;
+  transition: all 0.2s;
+}
+.card-header {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:12px 14px;
+  border-bottom:1px solid var(--light-gray);
+}
+.card-title {
+  font-size:14px; font-weight:700; color:var(--navy);
+  flex:1; overflow:hidden; text-overflow:ellipsis;
+}.badge {
+  padding:4px 10px; border-radius:12px;
+  font-size:11px; font-weight:700;
+  flex-shrink:0; margin-left:8px;
+}
+.badge-draft { background:#FFF3CD; color:#856404; }
+.badge-checking { background:#CCE5FF; color:#004085; }
+.badge-revision { background:#F8D7DA; color:#721C24; }
+.badge-approved { background:#D4EDDA; color:#155724; }
+
+.card-body { padding:14px; }
+.field { margin-bottom:12px; }
+.field-label {
+  font-size:11px; font-weight:700; color:var(--gray);
+  text-transform:uppercase; letter-spacing:0.5px;
+  margin-bottom:4px;
+}
+.field-value {
+  font-size:13px; line-height:1.6; white-space:pre-wrap;
+  word-break:break-word;
+}
+
+/* Edit mode */
+.field-edit {
+  width:100%; min-height:80px; padding:10px;
+  border:1px solid var(--light-gray); border-radius:8px;
+  font-size:13px; line-height:1.6;
+  font-family:inherit; resize:vertical;
+  display:none;
+}
+.card.editing .field-value { display:none; }
+.card.editing .field-edit { display:block; }
+/* Memo */
+.memo-area {
+  padding:10px 14px; background:#FFFCF0;
+  border-top:1px solid var(--light-gray);
+}
+.memo-input {
+  width:100%; border:1px dashed var(--gold); border-radius:8px;
+  padding:8px; font-size:12px; font-family:inherit;
+  background:transparent; resize:vertical; min-height:40px;
+}
+.memo-input::placeholder { color:var(--gold); opacity:0.6; }
+
+/* Actions */
+.card-actions {
+  display:flex; gap:6px; padding:10px 14px;
+  border-top:1px solid var(--light-gray);
+  flex-wrap:wrap;
+}
+.btn {
+  padding:8px 14px; border-radius:8px;
+  font-size:12px; font-weight:600;
+  border:none; cursor:pointer;
+  transition: all 0.15s; flex:1; min-width:0;
+  text-align:center;
+}
+.btn-edit { background:var(--light-gray); color:var(--navy); }
+.btn-save { background:var(--blue); color:var(--white); display:none; }
+.card.editing .btn-edit { display:none; }
+.card.editing .btn-save { display:block; }
+.btn-check { background:#CCE5FF; color:#004085; }
+.btn-revise { background:#F8D7DA; color:#721C24; }
+.btn-approve { background:var(--mint); color:var(--white); }
+.btn-draft { background:#FFF3CD; color:#856404; }
+/* Loading */
+.loading {
+  text-align:center; padding:40px;
+  color:var(--gray); font-size:14px;
+}
+.empty {
+  text-align:center; padding:60px 20px;
+  color:var(--gray);
+}
+.empty-icon { font-size:48px; margin-bottom:12px; }
+
+/* Toast */
+.toast {
+  position:fixed; bottom:80px; left:50%;
+  transform:translateX(-50%) translateY(100px);
+  background:var(--navy); color:var(--white);
+  padding:12px 24px; border-radius:24px;
+  font-size:13px; font-weight:600;
+  opacity:0; transition: all 0.3s;
+  z-index:200; pointer-events:none;
+}
+.toast.show {
+  transform:translateX(-50%) translateY(0);
+  opacity:1;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>sora コンテンツチェッカー</h1>
+  <div class="sub">投稿テンプレートの確認・編集・承認</div>
+</div>
+
+<div class="stats" id="statsBar"></div>
+<div class="sheet-tabs" id="sheetTabs"></div>
+<div class="cards" id="cardList"></div>
+<div class="toast" id="toast"></div>
+<script>
+const API = '';
+let sheets = [];
+let currentSheet = null;
+let currentFilter = 'all';
+
+const statusLabel = {
+  draft: '下書き', checking: 'チェック中',
+  revision: '修正必要', approved: '投稿OK'
+};
+const statusOrder = ['draft','checking','revision','approved'];
+
+async function api(url, opts) {
+  const r = await fetch(API + url, {
+    headers: { 'Content-Type': 'application/json' }, ...opts
+  });
+  return r.json();
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+async function loadStats() {
+  const stats = await api('/api/stats');
+  const bar = document.getElementById('statsBar');  const chips = [
+    { key:'all', label:'すべて', count:stats.total, cls:'chip-all' },
+    { key:'draft', label:'下書き', count:0, cls:'chip-draft' },
+    { key:'checking', label:'チェック中', count:0, cls:'chip-checking' },
+    { key:'revision', label:'修正必要', count:0, cls:'chip-revision' },
+    { key:'approved', label:'投稿OK', count:0, cls:'chip-approved' },
+  ];
+  stats.byStatus.forEach(s => {
+    const c = chips.find(ch => ch.key === s.status);
+    if (c) c.count = s.cnt;
+  });
+  bar.innerHTML = chips.map(c => `
+    <div class="stat-chip ${c.cls} ${currentFilter===c.key?'active':''}"
+         onclick="filterBy('${c.key}')">
+      <span class="num">${c.count}</span>${c.label}
+    </div>
+  `).join('');
+}
+
+async function loadSheets() {
+  sheets = await api('/api/sheets');
+  const tabs = document.getElementById('sheetTabs');
+  tabs.innerHTML = sheets.map(s => `
+    <button class="sheet-tab ${currentSheet===s.id?'active':''}"
+            onclick="selectSheet(${s.id})">${s.name}</button>
+  `).join('');
+  if (!currentSheet && sheets.length) selectSheet(sheets[0].id);
+}
+function selectSheet(id) {
+  currentSheet = id;
+  document.querySelectorAll('.sheet-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.sheet-tab').forEach(t => {
+    if (t.onclick.toString().includes(id)) t.classList.add('active');
+  });
+  loadContents();
+  loadSheets();
+}
+
+function filterBy(status) {
+  currentFilter = status;
+  loadStats();
+  loadContents();
+}
+
+function getTitle(obj) {
+  const keys = Object.keys(obj);
+  for (const k of keys) {
+    if (['テーマ','投稿テーマ','リールテーマ','記事タイトル案','フレーム名','施策名','ネタ','フォーマット名','フックパターン'].includes(k)) {
+      return obj[k];
+    }
+  }
+  const cat = obj['カテゴリ'] || obj['ターゲット'] || '';
+  const no = obj['No.'] || obj['STEP'] || '';
+  return cat ? `${no} ${cat}` : keys.length ? obj[keys[1]] || obj[keys[0]] : '(無題)';
+}
+async function loadContents() {
+  if (!currentSheet) return;
+  const list = document.getElementById('cardList');
+  list.innerHTML = '<div class="loading">読み込み中...</div>';
+  const url = `/api/sheets/${currentSheet}/contents?status=${currentFilter}`;
+  const items = await api(url);
+  if (!items.length) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">📋</div>コンテンツがありません</div>';
+    return;
+  }
+  list.innerHTML = items.map(item => renderCard(item)).join('');
+}
+
+function renderCard(item) {
+  const data = JSON.parse(item.col_data);
+  const title = getTitle(data);
+  const fields = Object.entries(data)
+    .filter(([k]) => !['No.','STEP'].includes(k))
+    .map(([k,v]) => `
+      <div class="field">
+        <div class="field-label">${esc(k)}</div>
+        <div class="field-value">${esc(v)}</div>
+        <textarea class="field-edit" data-key="${esc(k)}">${esc(v)}</textarea>
+      </div>
+    `).join('');
+  return `
+    <div class="card" id="card-${item.id}" data-id="${item.id}">
+      <div class="card-header">
+        <div class="card-title">${esc(title)}</div>
+        <span class="badge badge-${item.status}">${statusLabel[item.status]}</span>
+      </div>
+      <div class="card-body">${fields}</div>
+      <div class="memo-area">
+        <textarea class="memo-input" placeholder="メモ・修正指示..."
+                  onchange="saveMemo(${item.id}, this.value)">${esc(item.memo||'')}</textarea>
+      </div>
+      <div class="card-actions">
+        <button class="btn btn-edit" onclick="toggleEdit(${item.id})">✏️ 編集</button>
+        <button class="btn btn-save" onclick="saveEdit(${item.id})">💾 保存</button>
+        ${item.status!=='checking'?`<button class="btn btn-check" onclick="setStatus(${item.id},'checking')">👀 チェック中</button>`:''}
+        ${item.status!=='revision'?`<button class="btn btn-revise" onclick="setStatus(${item.id},'revision')">🔄 修正必要</button>`:''}
+        ${item.status!=='approved'?`<button class="btn btn-approve" onclick="setStatus(${item.id},'approved')">✅ 投稿OK</button>`:''}
+        ${item.status!=='draft'?`<button class="btn btn-draft" onclick="setStatus(${item.id},'draft')">📝 下書きに戻す</button>`:''}
+      </div>
+    </div>
+  `;
+}
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function toggleEdit(id) {
+  document.getElementById('card-'+id).classList.toggle('editing');
+}
+
+async function saveEdit(id) {
+  const card = document.getElementById('card-'+id);
+  const textareas = card.querySelectorAll('.field-edit');
+  const data = {};
+  textareas.forEach(ta => { data[ta.dataset.key] = ta.value; });
+  await api(`/api/contents/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ col_data: JSON.stringify(data) })
+  });
+  card.classList.remove('editing');
+  toast('保存しました');
+  loadContents();
+  loadStats();
+}
+
+async function saveMemo(id, memo) {
+  await api(`/api/contents/${id}`, {
+    method: 'PATCH', body: JSON.stringify({ memo })
+  });
+  toast('メモを保存しました');
+}
+
+async function setStatus(id, status) {
+  await api(`/api/contents/${id}`, {
+    method: 'PATCH', body: JSON.stringify({ status })
+  });
+  toast(`${statusLabel[status]} に変更`);
+  loadContents();
+  loadStats();
+}
+
+// Init
+loadStats();
+loadSheets();
+</script>
+</body>
+</html>

@@ -22,7 +22,8 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     sheet_id INTEGER NOT NULL,
     row_number INTEGER NOT NULL,
-    col_data TEXT NOT NULL,    status TEXT NOT NULL DEFAULT 'draft',
+    col_data TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'draft',
     memo TEXT DEFAULT '',
     updated_at TEXT DEFAULT (datetime('now','localtime')),
     FOREIGN KEY (sheet_id) REFERENCES sheets(id)
@@ -30,6 +31,54 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_contents_sheet ON contents(sheet_id);
   CREATE INDEX IF NOT EXISTS idx_contents_status ON contents(status);
 `);
+
+// Auto-import from Excel if DB is empty
+const contentCount = db.prepare('SELECT COUNT(*) as c FROM contents').get().c;
+if (contentCount === 0) {
+  console.log('DB is empty, auto-importing from Excel...');
+  const XLSX = require('xlsx');
+  const fs = require('fs');
+  const excelPath = path.join(__dirname, 'sora_SNS投稿テンプレ集.xlsx');
+  if (fs.existsSync(excelPath)) {
+    const wb = XLSX.readFile(excelPath);
+    const insertSheet = db.prepare('INSERT INTO sheets (name, sort_order) VALUES (?, ?)');
+    const insertContent = db.prepare('INSERT INTO contents (sheet_id, row_number, col_data, status) VALUES (?, ?, ?, ?)');
+    const tx = db.transaction(() => {
+      wb.SheetNames.forEach((sheetName, idx) => {
+        const ws = wb.Sheets[sheetName];
+        const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+        if (data.length < 2) return;
+        insertSheet.run(sheetName, idx);
+        const sheetId = db.prepare('SELECT id FROM sheets WHERE name = ?').get(sheetName).id;
+        let headerRowIdx = 0;
+        for (let i = 0; i < Math.min(5, data.length); i++) {
+          const row = data[i];
+          const filled = row.filter(c => c !== '').length;
+          if (filled >= 3) { headerRowIdx = i; break; }
+        }
+        const hdrs = data[headerRowIdx];
+        for (let r = headerRowIdx + 1; r < data.length; r++) {
+          const row = data[r];
+          if (!row || row.every(c => c === '' || c === null || c === undefined)) continue;
+          const obj = {};
+          hdrs.forEach((h, ci) => {
+            if (h && row[ci] !== undefined && row[ci] !== '') {
+              obj[String(h).trim()] = String(row[ci]).trim();
+            }
+          });
+          if (Object.keys(obj).length === 0) continue;
+          insertContent.run(sheetId, r, JSON.stringify(obj), 'draft');
+        }
+      });
+    });
+    tx();
+    const sc = db.prepare('SELECT COUNT(*) as c FROM sheets').get().c;
+    const cc = db.prepare('SELECT COUNT(*) as c FROM contents').get().c;
+    console.log(`Auto-imported: ${sc} sheets, ${cc} content items`);
+  } else {
+    console.log('Excel file not found, starting with empty DB');
+  }
+}
 
 app.use(cors());
 app.use(express.json({ limit: '5mb' }));
@@ -78,6 +127,7 @@ app.patch('/api/contents/:id', (req, res) => {
   const { status, col_data, memo } = req.body;
   const row = db.prepare('SELECT * FROM contents WHERE id = ?').get(req.params.id);
   if (!row) return res.status(404).json({ error: 'Not found' });
+
   const newStatus = status || row.status;
   const newData = col_data !== undefined ? col_data : row.col_data;
   const newMemo = memo !== undefined ? memo : row.memo;

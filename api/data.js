@@ -1,5 +1,9 @@
 const REPO = 'morimoto-sho/sora-content-checker';
-const FILE_PATH = 'data/status.json';
+
+const FILES = {
+  note: 'data/note.json',
+  threads: 'data/threads.json'
+};
 
 module.exports = async function handler(req, res) {
   const TOKEN = process.env.GITHUB_TOKEN;
@@ -10,7 +14,11 @@ module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const apiUrl = `https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`;
+  const type = req.query.type || 'threads';
+  const filePath = FILES[type];
+  if (!filePath) return res.status(400).json({ error: 'Invalid type' });
+
+  const apiUrl = `https://api.github.com/repos/${REPO}/contents/${filePath}`;
   const headers = {
     Authorization: `token ${TOKEN}`,
     Accept: 'application/vnd.github.v3+json',
@@ -46,7 +54,7 @@ module.exports = async function handler(req, res) {
           method: 'PUT',
           headers: { ...headers, 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            message: `update: ${item.id}`,
+            message: `update: ${type}/${item.id}`,
             content: Buffer.from(JSON.stringify(data, null, 2)).toString('base64'),
             sha: file.sha
           })

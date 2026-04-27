@@ -7,192 +7,106 @@
 <title>sora Threads チェック</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{
-  font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans',sans-serif;
-  background:#000;color:#e7e9ea;max-width:600px;margin:0 auto;
-  -webkit-font-smoothing:antialiased;
-}
-.header{
-  position:sticky;top:0;z-index:100;
-  background:rgba(0,0,0,.85);backdrop-filter:blur(12px);
-  border-bottom:1px solid #2f3336;padding:14px 16px;
-}
+body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans',sans-serif;background:#000;color:#e7e9ea;max-width:600px;margin:0 auto;-webkit-font-smoothing:antialiased}
+.header{position:sticky;top:0;z-index:100;background:rgba(0,0,0,.85);backdrop-filter:blur(12px);border-bottom:1px solid #2f3336;padding:14px 16px}
 .header h1{font-size:18px;font-weight:800}
 .header h1 span{color:#1d9bf0}
 .prog{margin-top:8px;display:flex;align-items:center;gap:10px}
 .prog-bar{flex:1;height:4px;background:#2f3336;border-radius:2px;overflow:hidden}
 .prog-fill{height:100%;background:#00ba7c;border-radius:2px;transition:width .3s}
 .prog-num{font-size:13px;color:#71767b;white-space:nowrap}
-<style>
-.filters{
-  display:flex;border-bottom:1px solid #2f3336;
-  position:sticky;top:58px;z-index:99;
-  background:rgba(0,0,0,.85);backdrop-filter:blur(12px);
-}
-.fbtn{
-  flex:1;padding:13px 0;text-align:center;font-size:14px;font-weight:600;
-  color:#71767b;background:none;border:none;cursor:pointer;
-  border-bottom:2px solid transparent;
-}
+.filters{display:flex;border-bottom:1px solid #2f3336;position:sticky;top:58px;z-index:99;background:rgba(0,0,0,.85);backdrop-filter:blur(12px)}
+.fbtn{flex:1;padding:13px 0;text-align:center;font-size:14px;font-weight:600;color:#71767b;background:none;border:none;cursor:pointer;border-bottom:2px solid transparent}
 .fbtn.on{color:#e7e9ea;border-bottom-color:#1d9bf0}
-
 .feed{padding-bottom:60px}
 .post{border-bottom:1px solid #2f3336;padding:16px}
 .post-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-.ava{
-  width:40px;height:40px;border-radius:50%;
-  background:linear-gradient(135deg,#667eea,#764ba2);
-  display:flex;align-items:center;justify-content:center;
-  font-size:14px;font-weight:700;color:#fff;flex-shrink:0;
-}
-.post-info{flex:1}
-.post-name{font-size:15px;font-weight:700}
-.post-cat{font-size:13px;color:#71767b}
-.post-text{
-  font-size:15px;line-height:1.75;white-space:pre-wrap;
-  word-break:break-word;margin-left:50px;
-}
-/* Edit */
+.ava{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0}
+.post-info{flex:1}.post-name{font-size:15px;font-weight:700}.post-cat{font-size:13px;color:#71767b}
+.post-text{font-size:15px;line-height:1.75;white-space:pre-wrap;word-break:break-word;margin-left:50px}
 .post-edit{display:none;margin-left:50px;margin-top:8px}
-.post.editing .post-text{display:none}
-.post.editing .post-edit{display:block}
-.post-ta{
-  width:100%;min-height:120px;background:#16181c;border:1px solid #2f3336;
-  border-radius:12px;padding:12px;color:#e7e9ea;font-size:15px;
-  line-height:1.7;font-family:inherit;resize:vertical;
-}
+.post.editing .post-text{display:none}.post.editing .post-edit{display:block}
+.post-ta{width:100%;min-height:120px;background:#16181c;border:1px solid #2f3336;border-radius:12px;padding:12px;color:#e7e9ea;font-size:15px;line-height:1.7;font-family:inherit;resize:vertical}
 .edit-row{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
 .edit-row button{padding:8px 20px;border-radius:20px;font-size:13px;font-weight:700;border:none;cursor:pointer}
-.e-cancel{background:#2f3336;color:#e7e9ea}
-.e-save{background:#1d9bf0;color:#fff}
-
-/* Actions */
+.e-cancel{background:#2f3336;color:#e7e9ea}.e-save{background:#1d9bf0;color:#fff}
 .actions{display:flex;margin-left:50px;margin-top:12px;gap:0}
-.abtn{
-  display:flex;align-items:center;gap:5px;
-  background:none;border:none;cursor:pointer;
-  color:#71767b;font-size:13px;padding:8px 16px;border-radius:50px;
-}
+.abtn{display:flex;align-items:center;gap:5px;background:none;border:none;cursor:pointer;color:#71767b;font-size:13px;padding:8px 16px;border-radius:50px}
 .abtn svg{width:20px;height:20px}
-.abtn.ok:hover,.abtn.ok.on{color:#00ba7c;background:rgba(0,186,124,.1)}
-.abtn.ok.on svg{fill:#00ba7c}
-.abtn.ng:hover,.abtn.ng.on{color:#f91880;background:rgba(249,24,128,.1)}
-.abtn.ng.on svg{fill:#f91880}
-.abtn.ed:hover{color:#1d9bf0;background:rgba(29,155,240,.1)}
-.abtn.on{font-weight:700}
-
-.empty{text-align:center;padding:80px 20px;color:#71767b;font-size:15px}
-.loading{text-align:center;padding:80px 20px;color:#71767b;font-size:15px}
-.toast{
-  position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(80px);
-  background:#1d9bf0;color:#fff;padding:10px 24px;border-radius:24px;
-  font-size:14px;font-weight:600;opacity:0;transition:all .3s;z-index:300;
-}
+.abtn.ok:hover,.abtn.ok.on{color:#00ba7c;background:rgba(0,186,124,.1)}.abtn.ok.on svg{fill:#00ba7c}
+.abtn.ng:hover,.abtn.ng.on{color:#f91880;background:rgba(249,24,128,.1)}.abtn.ng.on svg{fill:#f91880}
+.abtn.ed:hover{color:#1d9bf0;background:rgba(29,155,240,.1)}.abtn.on{font-weight:700}
+.empty,.loading{text-align:center;padding:80px 20px;color:#71767b;font-size:15px}
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(80px);background:#1d9bf0;color:#fff;padding:10px 24px;border-radius:24px;font-size:14px;font-weight:600;opacity:0;transition:all .3s;z-index:300}
 .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.saving{pointer-events:none;opacity:.5}
 </style>
 </head>
 <body>
 <div class="header">
   <h1><span>sora</span> Threads チェック</h1>
-  <div class="prog">
-    <div class="prog-bar"><div class="prog-fill" id="pf"></div></div>
-    <div class="prog-num" id="pn"></div>
-  </div>
+  <div class="prog"><div class="prog-bar"><div class="prog-fill" id="pf"></div></div><div class="prog-num" id="pn"></div></div>
 </div>
 <div class="filters" id="fil"></div>
 <div class="feed" id="feed"><div class="loading">読み込み中...</div></div>
 <div class="toast" id="toast"></div>
 <script>
-let S=[];
-let F='all';
-let THREADS_SHEET_ID=null;
-
+let S=[], F='all';
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1500)}
 function esc(s){return s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):''}
 
-async function init(){
-  // Find Threads sheet
-  const sheets=await(await fetch('/api/sheets')).json();
-  const ts=sheets.find(s=>s.name.includes('Threads'));
-  if(!ts){document.getElementById('feed').innerHTML='<div class="empty">Threadsシートが見つかりません</div>';return}
-  THREADS_SHEET_ID=ts.id;
-  await loadData();
+async function loadData(){
+  try{
+    const r=await fetch('/api/data');
+    if(!r.ok)throw new Error('API error');
+    S=await r.json();
+    render();
+  }catch(e){document.getElementById('feed').innerHTML='<div class="empty">読み込みエラー</div>'}
 }
 
-async function loadData(){
-  const statusParam=F==='all'?'all':F==='draft'?'draft':F==='approved'?'approved':'revision';
-  const raw=await(await fetch('/api/sheets/'+THREADS_SHEET_ID+'/contents?status=all')).json();
-  S=raw.map(r=>{
-    const d=JSON.parse(r.col_data);
-    return {id:r.id, cat:d['カテゴリ']||d['分類']||'', theme:d['テーマ名']||d['テーマ']||'', text:d['投稿テンプレート']||d['投稿文']||d['本文']||'', status:r.status, memo:r.memo};
-  });
-  render();
-}
-function stats(){
-  const c={all:S.length,draft:0,approved:0,revision:0};
-  S.forEach(s=>{c[s.status]=(c[s.status]||0)+1});return c;
-}
+function stats(){const c={all:S.length,draft:0,approved:0,revision:0};S.forEach(s=>{c[s.status]=(c[s.status]||0)+1});return c}
 
 function render(){
   const c=stats();
   const pct=c.all?Math.round(c.approved/c.all*100):0;
   document.getElementById('pf').style.width=pct+'%';
   document.getElementById('pn').textContent=c.approved+'/'+c.all+' OK ('+pct+'%)';
-
   document.getElementById('fil').innerHTML=[
     {k:'all',l:'すべて',n:c.all},{k:'draft',l:'未チェック',n:c.draft},
     {k:'approved',l:'OK',n:c.approved},{k:'revision',l:'ボツ',n:c.revision}
-  ].map(x=>'<button class="fbtn'+(F===x.k?' on':'')+'" onclick="setFilter(\''+x.k+'\')">'+x.l+' '+x.n+'</button>').join('');
-
+  ].map(x=>'<button class="fbtn'+(F===x.k?' on':'')+'" onclick="F=\''+x.k+'\';render()">'+x.l+' '+x.n+'</button>').join('');
   let items=F==='all'?S:S.filter(s=>s.status===F);
   const feed=document.getElementById('feed');
   if(!items.length){feed.innerHTML='<div class="empty">なし</div>';return}
   feed.innerHTML=items.map(p=>{
     const ok=p.status==='approved',ng=p.status==='revision';
-    return '<div class="post" id="p'+p.id+'">'+
-      '<div class="post-head"><div class="ava">S</div><div class="post-info">'+
-      '<div class="post-name">'+esc(p.theme)+'</div>'+
-      '<div class="post-cat">'+esc(p.cat)+'</div></div></div>'+
-      '<div class="post-text">'+esc(p.text)+'</div>'+
-      '<div class="post-edit"><textarea class="post-ta" id="ta'+p.id+'">'+esc(p.text)+'</textarea>'+
-      '<div class="edit-row"><button class="e-cancel" onclick="document.getElementById(\'p'+p.id+'\').classList.remove(\'editing\')">やめる</button>'+
-      '<button class="e-save" onclick="doSave('+p.id+')">保存</button></div></div>'+
-      '<div class="actions">'+
-      '<button class="abtn ed" onclick="document.getElementById(\'p'+p.id+'\').classList.add(\'editing\')" title="編集"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></button>'+
-      '<button class="abtn ng'+(ng?' on':'')+'" onclick="tog('+p.id+',\'revision\')" title="ボツ"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/></svg>'+(ng?' ボツ':'')+'</button>'+
-      '<button class="abtn ok'+(ok?' on':'')+'" onclick="tog('+p.id+',\'approved\')" title="投稿OK"><svg viewBox="0 0 24 24" fill="currentColor"><path d="'+(ok?'M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z':'M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zm-4.4 15.55l-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05z')+'"/></svg>'+(ok?' OK':'')+'</button>'+
-      '</div></div>';
+    return '<div class="post" id="p'+p.id+'"><div class="post-head"><div class="ava">S</div><div class="post-info"><div class="post-name">'+esc(p.theme)+'</div><div class="post-cat">'+esc(p.cat)+'</div></div></div><div class="post-text">'+esc(p.text)+'</div><div class="post-edit"><textarea class="post-ta" id="ta'+p.id+'">'+esc(p.text)+'</textarea><div class="edit-row"><button class="e-cancel" onclick="document.getElementById(\'p'+p.id+'\').classList.remove(\'editing\')">やめる</button><button class="e-save" onclick="doSave('+p.id+')">保存</button></div></div><div class="actions"><button class="abtn ed" onclick="document.getElementById(\'p'+p.id+'\').classList.add(\'editing\')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></button><button class="abtn ng'+(ng?' on':'')+'" onclick="tog('+p.id+',\'revision\')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/></svg>'+(ng?' ボツ':'')+'</button><button class="abtn ok'+(ok?' on':'')+'" onclick="tog('+p.id+',\'approved\')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="'+(ok?'M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z':'M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zm-4.4 15.55l-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05z')+'"/></svg>'+(ok?' OK':'')+'</button></div></div>';
   }).join('');
 }
-function setFilter(f){F=f;render()}
-
 async function tog(id,t){
   const p=S.find(s=>s.id===id);if(!p)return;
+  const el=document.getElementById('p'+id);if(el)el.classList.add('saving');
   const newStatus=p.status===t?'draft':t;
-  await fetch('/api/contents/'+id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:newStatus})});
-  p.status=newStatus;
-  toast(newStatus==='approved'?'💚 投稿OK':newStatus==='revision'?'🚫 ボツ':'戻しました');
+  try{
+    await fetch('/api/data',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,status:newStatus})});
+    p.status=newStatus;
+    toast(newStatus==='approved'?'💚 投稿OK':newStatus==='revision'?'🚫 ボツ':'戻しました');
+  }catch(e){toast('保存エラー')}
   render();
 }
-
 async function doSave(id){
   const p=S.find(s=>s.id===id);if(!p)return;
   const newText=document.getElementById('ta'+id).value;
-  const d=JSON.parse((await(await fetch('/api/contents/'+id)).json()).col_data);
-  if(d['投稿テンプレート']!==undefined) d['投稿テンプレート']=newText;
-  else if(d['投稿文']!==undefined) d['投稿文']=newText;
-  else if(d['本文']!==undefined) d['本文']=newText;
-  else d['投稿テンプレート']=newText;
-  await fetch('/api/contents/'+id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({col_data:JSON.stringify(d)})});
-  p.text=newText;
-  document.getElementById('p'+id).classList.remove('editing');
-  toast('保存しました');render();
+  try{
+    await fetch('/api/data',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,text:newText})});
+    p.text=newText;
+    document.getElementById('p'+id).classList.remove('editing');
+    toast('保存しました');
+  }catch(e){toast('保存エラー')}
+  render();
 }
-
-// Auto-refresh every 10 seconds to sync between devices
 setInterval(()=>loadData(),10000);
-
-init();
+loadData();
 </script>
 </body>
 </html>

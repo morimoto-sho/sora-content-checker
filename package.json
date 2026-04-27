@@ -1,5 +1,1 @@
-{
-  "name": "sora-content-checker",
-  "version": "3.0.0",
-  "private": true
-}
+{"name":"sora-content-checker","version":"3.0.0","private":true,"type":"module"}
